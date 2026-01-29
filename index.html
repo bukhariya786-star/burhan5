@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stock Search</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f4f6f8;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  margin:0;
+}
+.box{
+  background:#fff;
+  padding:25px;
+  border-radius:12px;
+  width:360px;
+  box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
+h2{
+  text-align:center;
+  margin-bottom:15px;
+}
+input{
+  width:100%;
+  padding:10px;
+  font-size:16px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  margin-bottom:10px;
+}
+button{
+  width:100%;
+  padding:10px;
+  font-size:16px;
+  background:#0b5ed7;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+button:hover{background:#094bb5;}
+
+.result{
+  margin-top:15px;
+  font-size:14px;
+}
+.low{
+  color:#c0392b;
+  font-weight:bold;
+}
+.ok{
+  color:#1e8449;
+  font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h2>Stock Search</h2>
+  <input type="text" id="code" placeholder="Enter Item Code (Eg: F1)">
+  <button onclick="searchItem()">Search</button>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+/* 🔴 REPLACE with your PUBLISHED TSV LINK */
+const sheetURL =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ-J8IvPnoIA-P1fbBemXE7tXLuT6_kODQamLC6xUUe2nnhAbRZ4zL2W13GNTm8rUQQrz2DpxNuoFB/pub?output=tsv";
+
+async function searchItem(){
+  const code = document.getElementById("code").value.trim().toUpperCase();
+  const result = document.getElementById("result");
+  result.innerHTML = "Searching...";
+
+  if(!code){
+    result.innerHTML = "<span class='low'>Enter Item Code</span>";
+    return;
+  }
+
+  try{
+    const res = await fetch(sheetURL);
+    const text = await res.text();
+    const rows = text.split("\n").map(r => r.split("\t"));
+
+    let found = false;
+
+    for(let i=1;i<rows.length;i++){
+      if(rows[i][0].trim().toUpperCase() === code){
+        found = true;
+
+        const itemName = rows[i][1];
+        const currentStock = rows[i][7];
+        const sellingPrice = rows[i][9];
+        const status = rows[i][12];
+
+        result.innerHTML = `
+          <b>Item :</b> ${itemName}<br>
+          <b>Stock :</b> ${currentStock}<br>
+          <b>Selling Price :</b> ₹${sellingPrice}<br>
+          <b>Status :</b>
+          <span class="${status.includes('LOW')?'low':'ok'}">
+            ${status}
+          </span>
+        `;
+        break;
+      }
+    }
+
+    if(!found){
+      result.innerHTML = "<span class='low'>Item Code not found</span>";
+    }
+
+  }catch(e){
+    result.innerHTML = "<span class='low'>Sheet loading error</span>";
+  }
+}
+</script>
+
+</body>
+</html>
